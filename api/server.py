@@ -1,8 +1,13 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, UploadFile, File
+from datetime import datetime
+from uuid import uuid4
 import hashlib
 
 app = FastAPI(title="BIP-2 Platform")
 
+# -----------------------------
+# ROOT: sanity ping
+# -----------------------------
 @app.get("/")
 def root():
     return {
@@ -11,6 +16,9 @@ def root():
         "boundary": "primitive-external"
     }
 
+# -----------------------------
+# ABOUT: boundary contract
+# -----------------------------
 @app.get("/about")
 def about():
     return {
@@ -26,16 +34,22 @@ def about():
         ]
     }
 
-@app.post("/ingest")
-async def ingest(request: Request):
-    data = await request.body()
+# -----------------------------
+# EXPERIMENT #3: Neutral Pipeline (UPLOAD -> HASH -> RECEIPT)
+# -----------------------------
+@app.post("/upload")
+async def upload(file: UploadFile = File(...)):
+    data = await file.read()
 
-    # TEMPORARY STUB (platform-safe)
-    # This will later be replaced by an external call to bip2-primitive
+    # PLATFORM-SAFE STUB:
+    # Deterministic math, no semantics, no validation.
     digest = hashlib.sha256(data).hexdigest()
 
     return {
-        "bytes_received": len(data),
-        "hash": digest,
-        "source": "platform-wrapper"
+        "storage_id": f"rec-{uuid4().hex[:8]}",
+        "hash_result": digest,
+        "platform_timestamp": datetime.utcnow().isoformat() + "Z",
+        "byte_count": len(data),
+        "primitive_version": "v1.2-final",
+        "note": "platform-safe sha256 stub (replace with frozen primitive call later)"
     }
