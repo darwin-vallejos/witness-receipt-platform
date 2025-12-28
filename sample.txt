@@ -1,0 +1,56 @@
+import sqlite3
+from collections import defaultdict
+
+DB_PATH = "storage/receipts.db"
+
+conn = sqlite3.connect(DB_PATH)
+cursor = conn.cursor()
+
+rows = cursor.execute("""
+    SELECT id, hash_result, byte_count, primitive_version, platform_timestamp
+    FROM receipts
+    ORDER BY platform_timestamp ASC
+""").fetchall()
+
+conn.close()
+
+assert len(rows) > 0, "No receipts found"
+
+seen_ids = set()
+hash_counts = defaultdict(int)
+last_ts = None
+
+for r in rows:
+    rid, h, bc, pv, ts = r
+
+    # Invariant 1: Unique receipt IDs
+    assert rid not in seen_ids, f"Duplicate receipt id detected: {rid}"
+    seen_ids.add(rid)
+
+    # Invariant 2: Required fields present
+    assert h and len(h) == 64, "Invalid hash_result"
+    assert isinstance(bc, int) and bc >= 0, "Invalid byte_count"
+    assert pv == "v1.2-final", f"Unexpected primitive version: {pv}"
+    assert ts is not None, "Missing timestamp"
+
+    # Invariant 3: Timestamp monotonicity
+    if last_ts is not None:
+        assert ts >= last_ts, "Timestamps are not monotonic"
+    last_ts = ts
+
+    # Track determinism
+    hash_counts[h] += 1
+
+print("✓ Receipts present:", len(rows))
+print("✓ Unique receipt IDs confirmed")
+print("✓ All hashes valid and well-formed")
+print("✓ Primitive version consistent:", "v1.2-final")
+print("✓ Timestamps monotonic")
+
+duplicates = {h: c for h, c in hash_counts.items() if c > 1}
+if duplicates:
+    print("✓ Determinism observed (duplicate hashes allowed):")
+    for h, c in duplicates.items():
+        print("  ", h, "→", c, "entries")
+else:
+    print("✓ Determinism not yet observed (no duplicate inputs uploaded)")

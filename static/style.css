@@ -1,0 +1,57 @@
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f6f7f8;
+    color: #111;
+    margin: 0;
+}
+
+.container {
+    max-width: 720px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+}
+
+h1 {
+    margin-bottom: 1rem;
+}
+
+.box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+code {
+    display: block;
+    background: #f0f0f0;
+    padding: 0.5rem;
+    overflow-x: auto;
+}
+
+.status {
+    font-weight: bold;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    border-radius: 4px;
+}
+
+.status.pending {
+    background: #eee;
+}
+
+.status.valid {
+    background: #e6fffa;
+    color: #065f46;
+}
+
+.status.invalid {
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+
+.explain {
+    font-size: 0.95rem;
+    color: #333;
+}

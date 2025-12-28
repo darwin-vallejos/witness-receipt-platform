@@ -3,15 +3,19 @@ import stripe
 from fastapi import APIRouter, HTTPException
 from uuid import uuid4
 
+router = APIRouter()
+
+# Stripe configuration
 stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
 
 PRICE_ID = os.environ["STRIPE_PRICE_ID"]
-BASE_URL = os.environ["APP_BASE_URL"]
-
-router = APIRouter()
+BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:8000")
 
 @router.post("/checkout")
 def create_checkout_session():
+    """
+    Creates a Stripe Checkout Session for PRO subscription.
+    """
     try:
         user_id = str(uuid4())
 
@@ -26,7 +30,9 @@ def create_checkout_session():
             success_url=f"{BASE_URL}/success",
             cancel_url=f"{BASE_URL}/cancel",
             client_reference_id=user_id,
-            metadata={"user_id": user_id},
+            metadata={
+                "user_id": user_id,
+            },
         )
 
         return {"checkout_url": session.url}

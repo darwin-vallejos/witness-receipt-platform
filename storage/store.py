@@ -1,21 +1,46 @@
-from pathlib import Path
-from datetime import datetime
-import shutil
-from fastapi import UploadFile
+from sqlalchemy import create_engine, Column, String, Integer, DateTime
+from sqlalchemy.orm import declarative_base, sessionmaker
+from datetime import datetime, timezone
+import uuid
 
-STORAGE_ROOT = Path("storage/data")
-STORAGE_ROOT.mkdir(parents=True, exist_ok=True)
+DATABASE_URL = "sqlite:///./storage/receipts.db"
 
-def store_file(file: UploadFile):
-    timestamp = datetime.utcnow().isoformat()
-    destination = STORAGE_ROOT / file.filename
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
 
-    with destination.open("wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+SessionLocal = sessionmaker(bind=engine)
+Base = declarative_base()
 
-    metadata = {
-        "filename": file.filename,
-        "stored_at": timestamp
-    }
 
-    return destination, metadata
+class Receipt(Base):
+    __tablename__ = "receipts"
+
+    id = Column(String, primary_key=True, index=True)
+    hash_result = Column(String, nullable=False)
+    byte_count = Column(Integer, nullable=False)
+    primitive_version = Column(String, nullable=False)
+    platform_timestamp = Column(DateTime, nullable=False)
+
+
+def init_db():
+    Base.metadata.create_all(bind=engine)
+
+
+def store_receipt(hash_result: str, byte_count: int, primitive_version: str) -> str:
+    db = SessionLocal()
+    try:
+        receipt_id = f"rec-{uuid.uuid4().hex}"
+        receipt = Receipt(
+            id=receipt_id,
+            hash_result=hash_result,
+            byte_count=byte_count,
+            primitive_version=primitive_version,
+            platform_timestamp=datetime.now(timezone.utc),
+        )
+        db.add(receipt)
+        db.commit()
+        return receipt_id
+    finally:
+        db.close()

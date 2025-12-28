@@ -1,4 +1,17 @@
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.venv/
 venv/
-.env
+
+# Databases
+*.db
+
+# Backups
+*.bak
+
+# OS
+.DS_Store
+Thumbs.db
